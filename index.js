@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -9,13 +10,11 @@ const blogRoute = require("./routes/blog");
 const Blog = require("./models/blog");
 
 const app = express();
+const PORT = 8000 || process.env.PORT;
 
-mongoose.connect(process.env.MONGO_URL, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect("mongodb://127.0.0.1:27017/blogKaro").then(() => {
+  console.log("mongoDB connected");
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -37,7 +36,8 @@ app.get("/", async (req, res) => {
 
 app.use("/user", userRouter);
 app.use("/blog", blogRoute);
+app.use("/uploads", express.static("public/uploads"));
 
-app.listen(4000, () => {
+app.listen(PORT, () => {
   console.log("server started");
 });

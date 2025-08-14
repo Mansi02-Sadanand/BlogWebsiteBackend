@@ -7,15 +7,31 @@ const Comment = require("../models/comments.js");
 
 const route = Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.resolve("./public/uploads"));
-  },
-  filename: function (req, file, cb) {
-    const filename = `${Date.now()}-${file.originalname}`;
-    cb(null, filename);
-  },
-});
+// Storage config
+let storage;
+if (process.env.NODE_ENV === "production") {
+  // In production, store temporarily in a temp folder before Cloudinary upload
+  storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, path.resolve("./temp")); // temp folder (not persisted)
+    },
+    filename: function (req, file, cb) {
+      const filename = `${Date.now()}-${file.originalname}`;
+      cb(null, filename);
+    },
+  });
+} else {
+  // Local dev: store in public/uploads
+  storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, path.resolve("./public/uploads"));
+    },
+    filename: function (req, file, cb) {
+      const filename = `${Date.now()}-${file.originalname}`;
+      cb(null, filename);
+    },
+  });
+}
 
 const upload = multer({ storage });
 
@@ -32,8 +48,6 @@ route.get("/:id", async (req, res) => {
   const comments = await Comment.find({ blogId: req.params.id }).populate(
     "createdBy"
   );
-  console.log(blog);
-  console.log(comments);
 
   res.render("blog", {
     user: req.user,
@@ -43,12 +57,12 @@ route.get("/:id", async (req, res) => {
 });
 
 route.post("/comment/:blogId", async (req, res) => {
-  const comment = await Comment.create({
+  await Comment.create({
     content: req.body.content,
     blogId: req.params.blogId,
     createdBy: req.user._id,
   });
-  console.log(comment);
+
   return res.redirect(`/blog/${req.params.blogId}`);
 });
 
