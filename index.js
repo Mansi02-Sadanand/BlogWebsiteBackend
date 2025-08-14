@@ -10,11 +10,23 @@ const blogRoute = require("./routes/blog");
 const Blog = require("./models/blog");
 
 const app = express();
-const PORT = 8000 || process.env.PORT;
+const PORT = process.env.PORT || 8000;
 
-mongoose.connect("mongodb://127.0.0.1:27017/blogKaro").then(() => {
-  console.log("mongoDB connected");
-});
+// Use env var if available, otherwise local DB
+const mongoUri = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/blogKaro";
+
+mongoose
+  .connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log(`✅ Connected to MongoDB: ${mongoUri}`);
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1); // Exit if DB can't connect
+  });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -39,5 +51,5 @@ app.use("/blog", blogRoute);
 app.use("/uploads", express.static("public/uploads"));
 
 app.listen(PORT, () => {
-  console.log("server started");
+  console.log(`🚀 Server started on port ${PORT}`);
 });
